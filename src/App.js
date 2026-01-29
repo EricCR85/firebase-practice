@@ -173,7 +173,10 @@ async function getPostByUid() {
       {loading ? "loading..." : user.email}
       <button onClick={createPost}>Create Post</button>
       <button onClick={getAllPosts}>Get All Post</button>
-      <button onClick={getPostById}>Get post by Id</button>
+      <button onClick={() => getPostById("PASTE_REAL_POST_ID_HERE")}>
+         Get post by Id
+      </button>
+      {/* <button onClick={getPostById}>Get post by Id</button> */}
       <button onClick={getPostByUid}>Get post by Uid</button>
       <button onClick={updatePost}>Update Post</button>
       <button onClick={deletePost}>Delete Post</button>
