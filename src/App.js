@@ -23,19 +23,35 @@ function App() {
   const [user, setUser] = React.useState({});
   const [loading, setLoading] = React.useState(true);
 
-  async function updatePost() {
-    const hardcodedId = "3U3wC4V5KKfykUtHevNG";
-    const postRef = doc(db, "posts", hardcodedId);
-    const post = await getPostById(hardcodedId);
-    console.log(post);
-    const newpost = {
-      ...post,
-      title: "Land a 400k job",
-    };
-    updateDoc(postRef, newpost);
-    
-  
+async function updatePost() {
+  const hardcodedId = "3U3wC4V5KKfykUtHevNG";
+
+  if (!hardcodedId) {
+    console.log("No post ID provided");
+    return;
   }
+
+  const postRef = doc(db, "posts", hardcodedId);
+  const post = await getPostById(hardcodedId);
+
+  if (!post) {
+    console.log("Post does not exist — cannot update");
+    return;
+  }
+
+  const updatedPost = {
+    ...post,
+    title: "Land a 400k job",
+  };
+
+  updateDoc(postRef, updatedPost)
+    .then(() => {
+      console.log("Post updated successfully");
+    })
+    .catch((error) => {
+      console.error("Error updating post:", error);
+    });
+}
 
   function deletePost() {
        const hardcodedId = "3U3wC4V5KKfykUtHevNG";
@@ -43,14 +59,26 @@ function App() {
     deleteDoc(postRef);
   }
 
-  function createPost() {
-    const post = {
-      title: "Finish Firebase Sectiion",
-      description: "Do Frontend Simplified",
-      uid: user.uid,
-    };
-    addDoc(collection(db, "posts"), post);
+function createPost() {
+  if (!user || !user.uid) {
+    console.log("No user logged in — cannot create post");
+    return;
   }
+
+  const post = {
+    title: "Finish Firebase Section",
+    description: "Do Frontend Simplified",
+    uid: user.uid,
+  };
+
+  addDoc(collection(db, "posts"), post)
+    .then((docRef) => {
+      console.log("Post created with ID:", docRef.id);
+    })
+    .catch((error) => {
+      console.error("Error creating post:", error);
+    });
+}
 
   async function getAllPosts() {
     const { docs } = await getDocs(collection(db, "posts"));
@@ -59,41 +87,56 @@ function App() {
   }
 
   async function getPostById(id) {
-    const postRef = doc(db, "posts", id);
-    const postSnap = await getDoc(postRef);
+  if (!id) {
+    console.log("No post ID provided");
+    return null;
+  }
 
-    if (postSnap.exists()) {
-      const post = postSnap.data();
-      console.log(post);
+  const postRef = doc(db, "posts", id);
+  const postSnap = await getDoc(postRef);
+
+  if (postSnap.exists()) {
+    const post = postSnap.data();
+    console.log("Post found:", post);
+    return post;
+  } else {
+    console.log("No such document!");
+    return null;
+  }
+}
+
+async function getPostByUid() {
+  if (!user || !user.uid) {
+    console.log("No user logged in");
+    return;
+  }
+
+  const postCollectionRef = query(
+    collection(db, "posts"),
+    where("uid", "==", user.uid)
+  );
+
+  const { docs } = await getDocs(postCollectionRef);
+  const posts = docs.map((doc) => ({ ...doc.data(), id: doc.id }));
+
+  console.log("Posts for user:", posts);
+}
+
+      React.useEffect(() => {
+  const unsubscribe = onAuthStateChanged(auth, (user) => {
+    setLoading(false);
+    if (user) {
+      console.log("User logged in:", user);
+      setUser(user);
     } else {
-      console.log("No such document!");
+      console.log("No user logged in");
+      setUser({});
     }
-  }
-
-  async function getPostByUid() {
-    const postCollectionRef = await query(
-      collection(db, "posts"),
-      where("uid", "==", "user.uid"),
-    );
-    const { docs } = await getDocs(postCollectionRef);
-    console.log(docs.map((doc) => doc.data()));
-  }
-
-  React.useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setLoading(false);
-      if (user) {
-        console.log("User logged in:", user);
-        setUser(user);
-      } else {
-        console.log("No user logged in");
-        setUser({});
-      }
-    });
-
-    // Cleanup subscription on unmount
-    return () => unsubscribe();
-  }, []);
+  });
+  
+  // Cleanup subscription on unmount
+  return () => unsubscribe();
+}, []);
 
   function register() {
     console.log("register");
