@@ -1,10 +1,22 @@
 import './App.css';
 import { auth } from './firebase/init';
+import { createUserWithEmailAndPassword } from "firebase/auth";
+
 
 function App() {
+  function register() {
+    console.log('register')
+    createUserWithEmailAndPassword(auth, 'email@email.com', 'test12')
+    .then((user) => {
+      console.log(user)
+    })
+    .catch((error) => {
+      console.log(error)
+    })
+  }
   return (
     <div className="App">
-   test
+   <button onClick={register}>Register</button>
     </div>
   );
 }
